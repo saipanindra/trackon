@@ -20,7 +20,6 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-
 import android.content.Context;
 import android.location.Location;
 import android.location.LocationListener;
@@ -29,10 +28,14 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.view.Menu;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.widget.Button;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
@@ -42,7 +45,12 @@ public class MainActivity extends FragmentActivity {
 	LocationManager locationManager = null;
 	LocationListener locationListener  = null;
 	Location existingLocation = null;
+	
+	Button placesButton = null;
 
+/*
+ * Inner Class , Input for Asynchronous fetch of Places of interest
+ */
 private class AsynchInput{
 	GoogleMap map;
 	String placesURL;
@@ -52,6 +60,9 @@ private class AsynchInput{
 	}
 }
 
+/*
+ * Inner Class,Output from Asynchronous fetch of Places of Interest
+ */
 private class AsynchOutput{
 	GoogleMap map;
 	String placesOfInterest;
@@ -60,7 +71,10 @@ private class AsynchOutput{
 		placesOfInterest = _placesOfInterest;
 	}
 }
-
+/*
+ * Place object with name latitude and location added as part of output of Aynchronous
+ * fetch of Places of Interest
+ */
 
 private class PlaceObj{
 	public String name;
@@ -72,7 +86,9 @@ private class PlaceObj{
 		lng = _lng;
 	}
 }
-
+/*
+ * Task to Fetch the Places of Interest Aynchronously
+ */
 private class GetPlaces extends AsyncTask<AsynchInput,Void,AsynchOutput>{
 	
 protected ArrayList<PlaceObj> getPlacesFromJSON(String placesJSON){
@@ -89,10 +105,6 @@ protected ArrayList<PlaceObj> getPlacesFromJSON(String placesJSON){
 			Double locationLat = locationObj.getDouble("lat");
 			Double locationLng = locationObj.getDouble("lng");
 			String name = resultObj.getString("name");
-			//String geometryStr = jsonObject.getString("geometry");
-			//String name = jsonObject.getString("name");
-			//Double locationLat = Double.parseDouble(geometryStr.split("{")[1].split("{")[1].split(":")[1].split(",")[0].trim());
-			//Double locationLng = Double.parseDouble(geometryStr.split("{")[1].split("{")[1].split(":")[1].split(",")[1].split(":")[1].trim());
 			PlaceObj pObj = new PlaceObj(name,locationLat,locationLng);
 			 
 			pList.add(pObj);
@@ -110,7 +122,12 @@ protected ArrayList<PlaceObj> getPlacesFromJSON(String placesJSON){
 
 }
 
-
+/*
+ * 
+ * (non-Javadoc)
+ * @see android.os.AsyncTask#doInBackground(Params[])
+ * To get the Places of Interest
+ */
 
 	@Override
 	protected AsynchOutput doInBackground(AsynchInput... placesURL) {
@@ -161,7 +178,11 @@ protected ArrayList<PlaceObj> getPlacesFromJSON(String placesJSON){
 		return null;
 	}
 	
-	
+	/*
+	 * (non-Javadoc)
+	 * @see android.os.AsyncTask#onPostExecute(java.lang.Object)
+	 * Process(Adding markers on map) after getting output from the Asynchronous task
+	 */
 
 	@Override
 	protected void onPostExecute(AsynchOutput result) {
@@ -184,23 +205,31 @@ protected ArrayList<PlaceObj> getPlacesFromJSON(String placesJSON){
 		}
 	}
 }
+/*
+ * (non-Javadoc)
+ * @see android.support.v4.app.FragmentActivity#onCreate(android.os.Bundle)
+ * When the application first loads
+ */
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 		final GoogleMap myMap = ((SupportMapFragment)getSupportFragmentManager().findFragmentById(R.id.map)).getMap();
+		placesButton = (Button) findViewById(R.id.placesButton);
 		locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
 		locationListener = new LocationListener(){
-
+        
 		@Override
-		public void onLocationChanged(Location loc) {
+		public void onLocationChanged(Location loc	) {
 			long currentLocationTimeInMillis = loc.getTime();	
-			if((existingLocation != null && (currentLocationTimeInMillis - existingLocation.getTime()) > 2000) || existingLocation == null){
+			if((existingLocation != null && (currentLocationTimeInMillis - existingLocation.getTime()) > 2000 * 60) || existingLocation == null){
 				
 				myMap.clear();
 				existingLocation = loc;
 				showLocationOnMap(myMap,loc,"Your Location");
-				showInterestingPlacesNearby(myMap,loc);
+				PlacesButtonClickListener placesClickListner = new PlacesButtonClickListener(myMap,loc);
+				placesButton.setOnClickListener(placesClickListner);
+				//showInterestingPlacesNearby(myMap,loc);
 			
 			}
 		}
@@ -218,19 +247,31 @@ protected ArrayList<PlaceObj> getPlacesFromJSON(String placesJSON){
 	};
 
 	}
+	/*
+	 * (non-Javadoc)
+	 * @see android.support.v4.app.FragmentActivity#onResume()
+	 * When the application resumes from a pause
+	 */
 	
 	protected void onResume(){
 		super.onResume();
 		if(locationManager!=null)
 		locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
 	}
-	
+	/*
+	 * (non-Javadoc)
+	 * @see android.support.v4.app.FragmentActivity#onPause()
+	 * When application pauses.
+	 */
 	protected void onPause(){
 		super.onPause();
 		if(locationManager!=null)
 		locationManager.removeUpdates(locationListener);
 	}
 	
+	/*
+	 * To create the search URL and invoke the asynchronous task for getting places of interest.
+	 */
 	public void showInterestingPlacesNearby(GoogleMap myMap,Location loc){
 		
 		String placesSearchStr = "https://maps.googleapis.com/maps/api/place/nearbysearch/" +
@@ -243,27 +284,59 @@ protected ArrayList<PlaceObj> getPlacesFromJSON(String placesJSON){
 			
 		}
 		
+	/*
+	 * Zoom into location of interest.
+	 */
 	public void zoomToCurrentLocation(GoogleMap myMap,Location loc){
 		LatLng latlng = new LatLng(loc.getLatitude(),loc.getLongitude());
-		myMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latlng, 10));
+		myMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latlng, 30));
 	}
-	
+	/*
+	 * Mark the location of interest on map
+	 */
 	public void showLocationOnMap(GoogleMap myMap,Location loc,String label){
 
 		//myMap.clear();
-		if(label.equals("Your Location"))
-		 zoomToCurrentLocation(myMap,loc);
 		LatLng latlng = new LatLng(loc.getLatitude(),loc.getLongitude());
-		myMap.addMarker(new MarkerOptions().position(latlng).title(label));
+		if(label.equals("Your Location")){
+		 zoomToCurrentLocation(myMap,loc);
+		 myMap.addMarker(new MarkerOptions()
+		 .position(latlng)
+		 .title(label)
+		 .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
+		 
+		}
+		else
+		 myMap.addMarker(new MarkerOptions().position(latlng).title(label));
 		//myMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latlng, 10));
 
 			
 	}
+	
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// Inflate the menu; this adds items to the action bar if it is present.
 		getMenuInflater().inflate(R.menu.main, menu);
 		return true;
 	}
+	
+	private class PlacesButtonClickListener implements OnClickListener{
+
+		GoogleMap myMap;
+		Location loc;
+		PlacesButtonClickListener(GoogleMap _myMap, Location _loc){
+			myMap = _myMap;
+			loc = _loc;
+		}
+		
+		@Override
+		public void onClick(View v) {
+			// TODO Auto-generated method stub
+			showInterestingPlacesNearby(myMap,loc);
+		}
+		
+	}
+
+    
 
 }
 
