@@ -22,5 +22,13 @@
        android:layout_alignLeft="@+id/map"
        android:hint="@+string/places_hint"
        android:text="@+string/places_text" />
+
+   <ToggleButton
+       android:id="@+id/placesToggle"
+       android:layout_width="wrap_content"
+       android:layout_height="wrap_content"
+       android:layout_alignBottom="@+id/map"
+       android:layout_toRightOf="@+id/placesButton"
+       android:text="ToggleButton" />
    
 </RelativeLayout>
