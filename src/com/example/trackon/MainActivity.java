@@ -51,185 +51,95 @@ public class MainActivity extends FragmentActivity {
 	PlacesButtonClickListener placesClickListener = null;
 	PlacesButtonOffClickListener placesOffClickListener = null;
     ArrayList<PlaceObj> placesList = new ArrayList<PlaceObj>();
+    ArrayList<PlaceObj> placesVisited = new ArrayList<PlaceObj>();
+	
+    class GetPlaces extends AsyncTask<AsynchInput,Void,AsynchOutput>{
 
-	/*
-	 * Inner Class , Input for Asynchronous fetch of Places of interest
-	 */
-	private class AsynchInput{
-		GoogleMap map;
-		String placesURL;
-		public AsynchInput(GoogleMap _map, String _placesURL){
-			map = _map;
-			placesURL = _placesURL;
-		}
-	}
+    	@Override
+    	protected AsynchOutput doInBackground(AsynchInput... placesURL) {
+    		// TODO Auto-generated method stub
+    		StringBuilder placesBuilder = new StringBuilder();
+    		URI uri = null;
+    		URL myURL = null;
 
-	/*
-	 * Inner Class,Output from Asynchronous fetch of Places of Interest
-	 */
-	private class AsynchOutput{
-		GoogleMap map;
-		String placesOfInterest;
-		public AsynchOutput(GoogleMap _map, String _placesOfInterest){
-			map = _map;
-			placesOfInterest = _placesOfInterest;
-		}
-	}
-	/*
-	 * Place object with name latitude and location added as part of output of Aynchronous
-	 * fetch of Places of Interest
-	 */
 
-	private class PlaceObj{
-		public String name;
-		public Double lat;
-		public Double lng;
-		public PlaceObj(String _name, Double _lat,Double _lng){
-			name = _name;
-			lat = _lat;
-			lng = _lng;
-		}
-		@Override
-		public boolean equals(Object o) {
-			// TODO Auto-generated method stub
-			if(o instanceof PlaceObj)
-			 return (((PlaceObj) o).lat == this.lat && ((PlaceObj) o).lng == this.lng); 
-			return false;
-		}
-	}
-	/*
-	 * Task to Fetch the Places of Interest Aynchronously
-	 */
-	private class GetPlaces extends AsyncTask<AsynchInput,Void,AsynchOutput>{
+    		for(AsynchInput inputObj : placesURL){
+    			
+    			try{
+    				myURL = new URL(inputObj.placesURL);
+    				String nullFragment = null;
+    				uri = new URI(myURL.getProtocol(),myURL.getHost(),myURL.getPath(),myURL.getQuery(),nullFragment);
+    			}
+    			catch(MalformedURLException me){
+    				System.out.println("URL " + myURL + " is a malformed URL");
+    			}
+    			catch(URISyntaxException urie){
+    				System.out.println("URI " + uri + " is a malformed URL");
+    			}
+    		
+    			placesBuilder = PlacesFromURI.getPlacesFromURI(uri);
+    			return new AsynchOutput(inputObj.map, placesBuilder.toString());
+    	
+    	 }
+    		return null;
+    	}
+    	/*
+    	 * (non-Javadoc)
+    	 * @see android.os.AsyncTask#onPostExecute(java.lang.Object)
+    	 * Process(Adding markers on map) after getting output from the Asynchronous task
+    	 */
 
-		protected ArrayList<PlaceObj> getPlacesFromJSON(String placesJSON){
-
-			ArrayList<PlaceObj> pList = new ArrayList<PlaceObj>();
-			try{
-				JSONObject jsonObj = new JSONObject(placesJSON);
-				JSONArray jsonResultArray = jsonObj.getJSONArray("results");
-				for(int i = 0 ; i < jsonResultArray.length() ; i++){
-
-					JSONObject resultObj = jsonResultArray.getJSONObject(i);
-					JSONObject geometryObj = resultObj.getJSONObject("geometry");
-					JSONObject locationObj = geometryObj.getJSONObject("location");
-					Double locationLat = locationObj.getDouble("lat");
-					Double locationLng = locationObj.getDouble("lng");
-					String name = resultObj.getString("name");
-					PlaceObj pObj = new PlaceObj(name,locationLat,locationLng);
-
-					pList.add(pObj);
-
-				}
-
-				return pList;
-
-			}
-			catch(Exception e){
-				e.printStackTrace();
-			}
-
-			return null;
-
-		}
-
-		/*
-		 * 
-		 * (non-Javadoc)
-		 * @see android.os.AsyncTask#doInBackground(Params[])
-		 * To get the Places of Interest
-		 */
+    	@Override
+    	protected void onPostExecute(AsynchOutput result) {
+    		// TODO Auto-generated method stub
+    		if(result != null){
+    			super.onPostExecute(result);
+    			GoogleMap myMap = result.map;
+    			String resultString = result.placesOfInterest;
+    			if(resultString != ""){
+    				ArrayList<PlaceObj> places = PlacesFromJSON.getPlacesFromJSON(resultString);
+    				if(places.size()!=0){
+    					for(PlaceObj pObj : places){
+    					    placesList.add(pObj);
+    					}
+    					for(PlaceObj pObj : placesList)
+    					{
+    						Location placeLoc = new Location(LocationManager.GPS_PROVIDER);
+    						placeLoc.setLatitude(pObj.lat);
+    						placeLoc.setLongitude(pObj.lng);
+    						showLocationOnMap(myMap,placeLoc,pObj.name);
+    					}
+    				}
+    			}
+    		}
+    	}
+    }
+    
+    
+    class PlaceVisitChecker extends AsyncTask<AsynchInput,Void,AsynchOutput>{
 
 		@Override
-		protected AsynchOutput doInBackground(AsynchInput... placesURL) {
+		protected AsynchOutput doInBackground(AsynchInput... arg0) {
 			// TODO Auto-generated method stub
-			StringBuilder placesBuilder = new StringBuilder();
-			URI uri = null;
-			URL myURL = null;
-
-
-			for(AsynchInput inputObj : placesURL){
-				HttpClient placesClient  = new DefaultHttpClient();
-				try{
-					myURL = new URL(inputObj.placesURL);
-					String nullFragment = null;
-					uri = new URI(myURL.getProtocol(),myURL.getHost(),myURL.getPath(),myURL.getQuery(),nullFragment);
-				}
-				catch(MalformedURLException me){
-					System.out.println("URL " + myURL + " is a malformed URL");
-				}
-				catch(URISyntaxException urie){
-					System.out.println("URI " + uri + " is a malformed URL");
-				}
-				try{
-					HttpGet placesGet = new HttpGet(uri);
-					HttpResponse placesResponse = placesClient.execute(placesGet);
-					if(placesResponse != null){
-						StatusLine placeSearchStatus = placesResponse.getStatusLine();
-						if (placeSearchStatus != null && placeSearchStatus.getStatusCode() == 200) {
-							HttpEntity placesEntity = placesResponse.getEntity();
-							if(placesEntity != null){
-								InputStream placesContent = placesEntity.getContent();
-								InputStreamReader placesInput = new InputStreamReader(placesContent);
-								BufferedReader placesReader = new BufferedReader(placesInput);
-								String lineIn;
-								while ((lineIn = placesReader.readLine()) != null) {
-									placesBuilder.append(lineIn);
-								}
-							}
-							return new AsynchOutput(inputObj.map, placesBuilder.toString());
-						}
-					}
-				}
-				catch(Exception e){
-					e.printStackTrace();
-				}
-			}
-
 			return null;
 		}
-
-		/*
-		 * (non-Javadoc)
-		 * @see android.os.AsyncTask#onPostExecute(java.lang.Object)
-		 * Process(Adding markers on map) after getting output from the Asynchronous task
-		 */
 
 		@Override
 		protected void onPostExecute(AsynchOutput result) {
 			// TODO Auto-generated method stub
-			if(result != null){
-				super.onPostExecute(result);
-				GoogleMap myMap = result.map;
-				String resultString = result.placesOfInterest;
-				if(resultString != ""){
-					ArrayList<PlaceObj> places = getPlacesFromJSON(resultString);
-					if(places.size()!=0){
-						for(PlaceObj pObj : places){
-						    placesList.add(pObj);
-							//Location loc = new Location(LocationManager.GPS_PROVIDER);
-							//loc.setLatitude(pObj.lat);
-							//loc.setLongitude(pObj.lng);
-							//showLocationOnMap(myMap,loc,pObj.name);
-						}
-						for(PlaceObj pObj : placesList)
-						{
-							Location placeLoc = new Location(LocationManager.GPS_PROVIDER);
-							placeLoc.setLatitude(pObj.lat);
-							placeLoc.setLongitude(pObj.lng);
-							showLocationOnMap(myMap,placeLoc,pObj.name);
-						}
-					}
-				}
-			}
+			super.onPostExecute(result);
 		}
-	}
-	/*
-	 * (non-Javadoc)
-	 * @see android.support.v4.app.FragmentActivity#onCreate(android.os.Bundle)
-	 * When the application first loads
-	 */
-	@Override
+
+		@Override
+		protected void onProgressUpdate(Void... values) {
+			// TODO Auto-generated method stub
+			super.onProgressUpdate(values);
+		}
+    	
+    }
+
+    
+    @Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
