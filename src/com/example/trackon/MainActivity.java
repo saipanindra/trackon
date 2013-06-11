@@ -46,11 +46,11 @@ public class MainActivity extends FragmentActivity {
 	LocationManager locationManager = null;
 	LocationListener locationListener  = null;
 	Location existingLocation = null;
-	Button placesButton = null;
+	//Button placesButton = null;
 	ToggleButton placesToggleButton = null;
 	PlacesButtonClickListener placesClickListener = null;
 	PlacesButtonOffClickListener placesOffClickListener = null;
-
+    ArrayList<PlaceObj> placesList = new ArrayList<PlaceObj>();
 
 	/*
 	 * Inner Class , Input for Asynchronous fetch of Places of interest
@@ -88,6 +88,13 @@ public class MainActivity extends FragmentActivity {
 			name = _name;
 			lat = _lat;
 			lng = _lng;
+		}
+		@Override
+		public boolean equals(Object o) {
+			// TODO Auto-generated method stub
+			if(o instanceof PlaceObj)
+			 return (((PlaceObj) o).lat == this.lat && ((PlaceObj) o).lng == this.lng); 
+			return false;
 		}
 	}
 	/*
@@ -199,10 +206,18 @@ public class MainActivity extends FragmentActivity {
 					ArrayList<PlaceObj> places = getPlacesFromJSON(resultString);
 					if(places.size()!=0){
 						for(PlaceObj pObj : places){
-							Location loc = new Location(LocationManager.GPS_PROVIDER);
-							loc.setLatitude(pObj.lat);
-							loc.setLongitude(pObj.lng);
-							showLocationOnMap(myMap,loc,pObj.name);
+						    placesList.add(pObj);
+							//Location loc = new Location(LocationManager.GPS_PROVIDER);
+							//loc.setLatitude(pObj.lat);
+							//loc.setLongitude(pObj.lng);
+							//showLocationOnMap(myMap,loc,pObj.name);
+						}
+						for(PlaceObj pObj : placesList)
+						{
+							Location placeLoc = new Location(LocationManager.GPS_PROVIDER);
+							placeLoc.setLatitude(pObj.lat);
+							placeLoc.setLongitude(pObj.lng);
+							showLocationOnMap(myMap,placeLoc,pObj.name);
 						}
 					}
 				}
@@ -219,7 +234,7 @@ public class MainActivity extends FragmentActivity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 		final GoogleMap myMap = ((SupportMapFragment)getSupportFragmentManager().findFragmentById(R.id.map)).getMap();
-		placesButton = (Button) findViewById(R.id.placesButton);
+		//placesButton = (Button) findViewById(R.id.placesButton);
 		placesToggleButton = (ToggleButton) findViewById(R.id.placesToggle);
 		locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
 		locationListener = new LocationListener(){
@@ -238,7 +253,7 @@ public class MainActivity extends FragmentActivity {
 					zoomToCurrentLocation(myMap,loc);
 					placesClickListener = new PlacesButtonClickListener(myMap,loc);
 					placesOffClickListener = new PlacesButtonOffClickListener(myMap,loc);
-					placesButton.setOnClickListener(placesClickListener);
+					//placesButton.setOnClickListener(placesClickListener);
 					if(placesToggleButton.isChecked())
 						placesToggleButton.setOnClickListener(placesOffClickListener);
 					else
@@ -295,8 +310,11 @@ public class MainActivity extends FragmentActivity {
 				"&key=AIzaSyBGdrFlD3TJ_r2_4UjZxHAYB8iZHEr77VI";
 
 		new GetPlaces().execute(new AsynchInput(myMap,placesSearchStr));
+		
 
 	}
+	
+	//public void show
 	public void clearInterestingPlacesNearby(GoogleMap myMap,Location loc){
 
 		myMap.clear();
