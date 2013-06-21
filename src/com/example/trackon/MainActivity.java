@@ -99,14 +99,7 @@ public class MainActivity extends FragmentActivity {
     					for(PlaceObj pObj : places){
     					    placesList.add(pObj);
     					}
-    					for(PlaceObj pObj : placesList)
-    					{
-    			
-    						Location placeLoc = new Location(LocationManager.GPS_PROVIDER);
-    						placeLoc.setLatitude(pObj.lat);
-    						placeLoc.setLongitude(pObj.lng);
-    						showLocationOnMap(myMap,placeLoc,pObj.name);
-    					}
+    					showPlaceListFromCache(myMap);
     				}
     			}
     		}
@@ -194,7 +187,17 @@ public class MainActivity extends FragmentActivity {
 		}
     	
     }
+    public void showPlaceListFromCache(GoogleMap myMap)
+    {
+    	for(PlaceObj pObj : placesList)
+		{
 
+			Location placeLoc = new Location(LocationManager.GPS_PROVIDER);
+			placeLoc.setLatitude(pObj.lat);
+			placeLoc.setLongitude(pObj.lng);
+			showLocationOnMap(myMap,placeLoc,pObj.name);
+		}
+    }
     
     @Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -383,7 +386,13 @@ public class MainActivity extends FragmentActivity {
 		@Override
 		public void onClick(View v) {
 			// TODO Auto-generated method stub
-			showInterestingPlacesNearby(myMap,loc);
+			Location currentLoc  = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+			if(!(currentLoc.getLatitude() == loc.getLatitude() && currentLoc.getLongitude() == loc.getLongitude()) || placesList.size() == 0 )
+			  showInterestingPlacesNearby(myMap,loc);
+			else
+			{
+				showPlaceListFromCache(myMap);
+			}
 			if(placesToggleButton.isChecked())
 			 placesToggleButton.setOnClickListener(placesOffClickListener);
 			else
