@@ -12,11 +12,14 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
+
 public class PlacesFromURI {
 
 	public static StringBuilder getPlacesFromURI(URI myURI){
 		StringBuilder placesBuilder = new StringBuilder();
-		HttpClient placesClient  = new DefaultHttpClient();
+			HttpClient placesClient  = new DefaultHttpClient();
 		try{
 			HttpGet placesGet = new HttpGet(myURI);
 			HttpResponse placesResponse = placesClient.execute(placesGet);

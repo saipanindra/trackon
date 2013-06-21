@@ -2,25 +2,15 @@ package com.example.trackon;
 
 
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.StatusLine;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.json.JSONArray;
-import org.json.JSONObject;
-
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -30,7 +20,6 @@ import android.support.v4.app.FragmentActivity;
 import android.view.Menu;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.widget.Button;
 import android.widget.ToggleButton;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -52,12 +41,84 @@ public class MainActivity extends FragmentActivity {
 	PlacesButtonOffClickListener placesOffClickListener = null;
     ArrayList<PlaceObj> placesList = new ArrayList<PlaceObj>();
     ArrayList<PlaceObj> placesVisited = new ArrayList<PlaceObj>();
+    final Context context = this;
 	
     class GetPlaces extends AsyncTask<AsynchInput,Void,AsynchOutput>{
 
     	@Override
     	protected AsynchOutput doInBackground(AsynchInput... placesURL) {
     		// TODO Auto-generated method stub
+    		StringBuilder placesBuilder = new StringBuilder();
+    		URI uri = null;
+    		URL myURL = null;
+    		GoogleMap myMap = null;
+    		for(AsynchInput inputObj : placesURL){
+    			myMap = inputObj.map;
+				String nullFragment = null;
+    			try{
+    				myURL = new URL(inputObj.placesURL);
+    				uri = new URI(myURL.getProtocol(),myURL.getHost(),myURL.getPath(),myURL.getQuery(),nullFragment);
+    			}
+    			catch(MalformedURLException me){
+    				System.out.println("URL " + myURL + " is a malformed URL");
+    			}
+    			catch(URISyntaxException urie){
+    				System.out.println("URI " + uri + " is a malformed URL");
+    			}
+    		
+    			placesBuilder = PlacesFromURI.getPlacesFromURI(uri);
+    			
+    				
+    			
+    	
+    	 }
+    		return new AsynchOutput(myMap, placesBuilder.toString());
+    	}
+    	/*
+    	 * (non-Javadoc)
+    	 * @see android.os.AsyncTask#onPostExecute(java.lang.Object)
+    	 * Process(Adding markers on map) after getting output from the Asynchronous task
+    	 */
+
+    	@Override
+    	protected void onPostExecute(AsynchOutput result) {
+    		// TODO Auto-generated method stub
+    	
+
+    		if(result != null){
+    			
+    			super.onPostExecute(result);
+    			
+    			GoogleMap myMap = result.map;
+    			String resultString = result.placesOfInterest;
+				if(!resultString.equals("")){
+				    				    				
+				    ArrayList<PlaceObj> places = PlacesFromJSON.getPlacesFromJSON(resultString);
+    				if(places.size()!=0){
+    					
+    					for(PlaceObj pObj : places){
+    					    placesList.add(pObj);
+    					}
+    					for(PlaceObj pObj : placesList)
+    					{
+    			
+    						Location placeLoc = new Location(LocationManager.GPS_PROVIDER);
+    						placeLoc.setLatitude(pObj.lat);
+    						placeLoc.setLongitude(pObj.lng);
+    						showLocationOnMap(myMap,placeLoc,pObj.name);
+    					}
+    				}
+    			}
+    		}
+    	}
+    }
+    
+    
+    class PlaceVisitChecker extends AsyncTask<AsynchInput,Void,AsynchOutput>{
+
+		@Override
+		protected AsynchOutput doInBackground(AsynchInput... placesURL) {
+			// TODO Auto-generated method stub
     		StringBuilder placesBuilder = new StringBuilder();
     		URI uri = null;
     		URL myURL = null;
@@ -82,52 +143,48 @@ public class MainActivity extends FragmentActivity {
     	
     	 }
     		return null;
-    	}
-    	/*
-    	 * (non-Javadoc)
-    	 * @see android.os.AsyncTask#onPostExecute(java.lang.Object)
-    	 * Process(Adding markers on map) after getting output from the Asynchronous task
-    	 */
 
-    	@Override
-    	protected void onPostExecute(AsynchOutput result) {
-    		// TODO Auto-generated method stub
-    		if(result != null){
-    			super.onPostExecute(result);
-    			GoogleMap myMap = result.map;
-    			String resultString = result.placesOfInterest;
-    			if(resultString != ""){
-    				ArrayList<PlaceObj> places = PlacesFromJSON.getPlacesFromJSON(resultString);
-    				if(places.size()!=0){
-    					for(PlaceObj pObj : places){
-    					    placesList.add(pObj);
-    					}
-    					for(PlaceObj pObj : placesList)
-    					{
-    						Location placeLoc = new Location(LocationManager.GPS_PROVIDER);
-    						placeLoc.setLatitude(pObj.lat);
-    						placeLoc.setLongitude(pObj.lng);
-    						showLocationOnMap(myMap,placeLoc,pObj.name);
-    					}
-    				}
-    			}
-    		}
-    	}
-    }
-    
-    
-    class PlaceVisitChecker extends AsyncTask<AsynchInput,Void,AsynchOutput>{
-
-		@Override
-		protected AsynchOutput doInBackground(AsynchInput... arg0) {
-			// TODO Auto-generated method stub
-			return null;
 		}
 
 		@Override
 		protected void onPostExecute(AsynchOutput result) {
 			// TODO Auto-generated method stub
+			if(result!= null){
 			super.onPostExecute(result);
+			
+			if(!result.placesOfInterest.equals(""))
+			{
+				ArrayList<PlaceObj> placesV = PlacesFromJSON.getPlacesFromJSON(result.placesOfInterest);
+				try
+				{
+					
+					Thread.sleep(2000);
+					Location currentLoc  = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+					//PlaceObj tempPObj = new PlaceObj("",currentLoc.getLatitude(),currentLoc.getLongitude());
+					
+					PlaceObj lastPlaceVisited = placesV.get(0);
+					String proximatePlaceOfInterestJSON = getProximatePlaceOfInterest(result.map,currentLoc);
+					ArrayList<PlaceObj> currentPOI = PlacesFromJSON.getPlacesFromJSON(proximatePlaceOfInterestJSON);
+					PlaceObj lastProximatePlaceOfInterest = currentPOI.get(0);
+					if(lastProximatePlaceOfInterest == lastPlaceVisited)
+					{
+						placesVisited.add(lastPlaceVisited);
+						Location placeLoc = new Location(LocationManager.GPS_PROVIDER);
+						placeLoc.setLatitude(lastPlaceVisited.lat);
+						placeLoc.setLongitude(lastPlaceVisited.lng);
+						showLocationOnMap(result.map,placeLoc,"POI");
+					}
+					
+				}
+				catch(InterruptedException i){
+					i.printStackTrace();
+				}
+				
+				
+				
+					
+			}
+			}
 		}
 
 		@Override
@@ -152,9 +209,9 @@ public class MainActivity extends FragmentActivity {
 			@Override
 			public void onLocationChanged(Location loc	) {
 				long currentLocationTimeInMillis = loc.getTime();	
-				if((existingLocation != null && (currentLocationTimeInMillis - existingLocation.getTime()) > 2000 * 60) || existingLocation == null){
+				if( (existingLocation != null && (currentLocationTimeInMillis - existingLocation.getTime()) > 2000 * 60) || existingLocation == null){
 
-					
+					//checkForPlaceProximity(myMap, loc);
 					myMap.clear();
 					existingLocation = loc;
 					showLocationOnMap(myMap,loc,"Your Location");
@@ -207,6 +264,44 @@ public class MainActivity extends FragmentActivity {
 		if(locationManager!=null)
 			locationManager.removeUpdates(locationListener);
 	}
+	
+	public void checkForPlaceProximity(GoogleMap myMap, Location loc)
+	{
+		String placesSearchStr = "https://maps.googleapis.com/maps/api/place/nearbysearch/" +
+				"json?location="+loc.getLatitude()+","+loc.getLongitude()+
+				"&radius=10&sensor=true" +
+				"&types=food|bar|store|museum|art_gallery"+
+				"&key=AIzaSyCCFZuvv8sdrcwIjCHQVoiNWCahSieEdbg";
+        new PlaceVisitChecker().execute(new AsynchInput(myMap,placesSearchStr));
+	}
+	
+	public String getProximatePlaceOfInterest(GoogleMap myMap, Location loc)
+	{
+		URL myURL = null;
+		URI uri = null;
+		StringBuilder placesBuilder = null;
+		String placesSearchStr = "https://maps.googleapis.com/maps/api/place/nearbysearch/" +
+				"json?location="+loc.getLatitude()+","+loc.getLongitude()+
+				"&radius=10&sensor=true" +
+				"&types=food|bar|store|museum|art_gallery"+
+				"&key=AIzaSyCCFZuvv8sdrcwIjCHQVoiNWCahSieEdbg";
+		
+		try{
+			myURL = new URL(placesSearchStr);
+			String nullFragment = null;
+			uri = new URI(myURL.getProtocol(),myURL.getHost(),myURL.getPath(),myURL.getQuery(),nullFragment);
+		}
+		catch(MalformedURLException me){
+			System.out.println("URL " + myURL + " is a malformed URL");
+		}
+		catch(URISyntaxException urie){
+			System.out.println("URI " + uri + " is a malformed URL");
+		}
+	
+		placesBuilder = PlacesFromURI.getPlacesFromURI(uri);
+	    return placesBuilder.toString();
+        
+	}
 
 	/*
 	 * To create the search URL and invoke the asynchronous task for getting places of interest.
@@ -217,7 +312,7 @@ public class MainActivity extends FragmentActivity {
 				"json?location="+loc.getLatitude()+","+loc.getLongitude()+
 				"&radius=1000&sensor=true" +
 				"&types=food|bar|store|museum|art_gallery"+
-				"&key=AIzaSyBGdrFlD3TJ_r2_4UjZxHAYB8iZHEr77VI";
+				"&key=AIzaSyCCFZuvv8sdrcwIjCHQVoiNWCahSieEdbg";
 
 		new GetPlaces().execute(new AsynchInput(myMap,placesSearchStr));
 		
@@ -254,6 +349,15 @@ public class MainActivity extends FragmentActivity {
 			.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
 
 		}
+		/*
+		else if(label.equals("POI")){
+			myMap.addMarker(new MarkerOptions()
+			.position(latlng)
+			.title(label)
+			.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_VIOLET)));
+
+		}
+		*/
 		else
 			myMap.addMarker(new MarkerOptions().position(latlng).title(label));
 		//myMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latlng, 10));
