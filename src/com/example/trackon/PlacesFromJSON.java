@@ -16,12 +16,14 @@ public class PlacesFromJSON {
 			for(int i = 0 ; i < jsonResultArray.length() ; i++){
 
 				JSONObject resultObj = jsonResultArray.getJSONObject(i);
+				
 				JSONObject geometryObj = resultObj.getJSONObject("geometry");
 				JSONObject locationObj = geometryObj.getJSONObject("location");
 				Double locationLat = locationObj.getDouble("lat");
 				Double locationLng = locationObj.getDouble("lng");
 				String name = resultObj.getString("name");
-				PlaceObj pObj = new PlaceObj(name,locationLat,locationLng);
+				String id = resultObj.getString("id");
+				PlaceObj pObj = new PlaceObj(name,locationLat,locationLng,id);
 
 				pList.add(pObj);
 
