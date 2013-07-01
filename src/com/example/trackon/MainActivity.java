@@ -8,9 +8,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 
-import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -27,6 +25,7 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 
@@ -37,10 +36,17 @@ public class MainActivity extends FragmentActivity {
 	Location existingLocation = null;
 	//Button placesButton = null;
 	ToggleButton placesToggleButton = null;
+	ToggleButton visitedPlacesToggleButton = null;
 	PlacesButtonClickListener placesClickListener = null;
 	PlacesButtonOffClickListener placesOffClickListener = null;
+	VisitedPlacesButtonClickListener visitedPlacesClickListener = null;
+	VisitedPlacesButtonOffClickListener visitedPlacesOffClickListener = null;
+	
 	ArrayList<PlaceObj> placesList = new ArrayList<PlaceObj>();
 	ArrayList<PlaceObj> placesVisited = new ArrayList<PlaceObj>();
+	ArrayList<Marker> placesListMarkers = new ArrayList<Marker>();
+	ArrayList<Marker> placesVisitedMarkers = new ArrayList<Marker>();
+	
 	final Context context = this;
 
 	class GetPlaces extends AsyncTask<AsynchInput,Void,AsynchOutput>{
@@ -160,11 +166,13 @@ public class MainActivity extends FragmentActivity {
 							PlaceObj lastProximatePlaceOfInterest = currentPOI.get(0);
 							if(lastProximatePlaceOfInterest.id.equals(lastPlaceVisited.id) && !placesVisited.contains(lastProximatePlaceOfInterest))
 							{
-								placesVisited.add(lastPlaceVisited);
+								
 								Location placeLoc = new Location(LocationManager.GPS_PROVIDER);
 								placeLoc.setLatitude(lastPlaceVisited.lat);
 								placeLoc.setLongitude(lastPlaceVisited.lng);
-								showVisitedPlaceOnMap(result.map,placeLoc,lastProximatePlaceOfInterest.name);
+								
+								placesVisited.add(lastPlaceVisited);
+								//showVisitedPlaceOnMap(result.map,placeLoc,lastProximatePlaceOfInterest.name);
 							}
 								
 						
@@ -195,6 +203,15 @@ public class MainActivity extends FragmentActivity {
 			showPlaceOfInterestOnMap(myMap,placeLoc,pObj.name);
 		}
 	}
+	
+	public void clearMarkers(ArrayList<Marker> markerList)
+	{
+		for(Marker m : markerList)
+		{
+			m.remove();
+		}
+		markerList.clear();
+	}
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -203,6 +220,7 @@ public class MainActivity extends FragmentActivity {
 		final GoogleMap myMap = ((SupportMapFragment)getSupportFragmentManager().findFragmentById(R.id.map)).getMap();
 		//placesButton = (Button) findViewById(R.id.placesButton);
 		placesToggleButton = (ToggleButton) findViewById(R.id.placesToggle);
+		visitedPlacesToggleButton = (ToggleButton) findViewById(R.id.visitedPlacesToggle);
 		locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
 		locationListener = new LocationListener(){
 
@@ -221,12 +239,20 @@ public class MainActivity extends FragmentActivity {
 					zoomToCurrentLocation(myMap,loc);
 					placesClickListener = new PlacesButtonClickListener(myMap,loc);
 					placesOffClickListener = new PlacesButtonOffClickListener(myMap,loc);
-					//placesButton.setOnClickListener(placesClickListener);
+					visitedPlacesClickListener = new VisitedPlacesButtonClickListener(myMap, loc);
+					visitedPlacesOffClickListener = new VisitedPlacesButtonOffClickListener(myMap, loc);
+					
 					if(placesToggleButton.isChecked())
 						placesToggleButton.setOnClickListener(placesOffClickListener);
 					else
 						placesToggleButton.setOnClickListener(placesClickListener);	
-					//showInterestingPlacesNearby(myMap,loc);
+					if(visitedPlacesToggleButton.isChecked()){
+						visitedPlacesToggleButton.setOnClickListener(visitedPlacesOffClickListener);
+					
+					}
+					else
+						visitedPlacesToggleButton.setOnClickListener(visitedPlacesOffClickListener);
+					
 
 				}
 			}
@@ -309,6 +335,7 @@ public class MainActivity extends FragmentActivity {
 	 */
 	public void showInterestingPlacesNearby(GoogleMap myMap,Location loc){
 
+		placesListMarkers.clear();
 		String placesSearchStr = "https://maps.googleapis.com/maps/api/place/nearbysearch/" +
 				"json?location="+loc.getLatitude()+","+loc.getLongitude()+
 				"&radius=1000&sensor=true" +
@@ -319,10 +346,13 @@ public class MainActivity extends FragmentActivity {
 
 	//public void show
 	public void clearInterestingPlacesNearby(GoogleMap myMap,Location loc){
-		myMap.clear();
+		clearMarkers(placesListMarkers);
 		showCurrentLocationOnMap(myMap,loc,"Your Location");
 	}
 
+	public void clearPlacesVisited(GoogleMap myMap, Location loc){
+	  clearMarkers(placesVisitedMarkers);
+	}
 	/*
 	 * Zoom into location of interest.
 	 */
@@ -349,16 +379,18 @@ public class MainActivity extends FragmentActivity {
 	 public void showVisitedPlaceOnMap(GoogleMap myMap,Location loc, String label){
 		//else if(label.equals("POI")){
 		 LatLng latlng = new LatLng(loc.getLatitude(),loc.getLongitude());
-			myMap.addMarker(new MarkerOptions()
+		 placesVisitedMarkers.add(myMap.addMarker(new MarkerOptions()
 			.position(latlng)
 			.title(label)
-			.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_VIOLET)));
+			.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_VIOLET))));
 
 		}
 	 public void showPlaceOfInterestOnMap(GoogleMap myMap, Location loc, String label)	 
 	 {
 		 LatLng latlng = new LatLng(loc.getLatitude(),loc.getLongitude());
-		 myMap.addMarker(new MarkerOptions().position(latlng).title(label));
+		 
+		 placesListMarkers.add(myMap.addMarker(new MarkerOptions().position(latlng).title(label)));
+		 
 	 }
 		//myMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latlng, 10));
 
@@ -369,6 +401,65 @@ public class MainActivity extends FragmentActivity {
 		// Inflate the menu; this adds items to the action bar if it is present.
 		getMenuInflater().inflate(R.menu.main, menu);
 		return true;
+	}
+
+	
+	private class VisitedPlacesButtonClickListener implements OnClickListener{
+
+		GoogleMap myMap;
+		Location loc;
+		VisitedPlacesButtonClickListener(GoogleMap _myMap, Location _loc){
+			myMap = _myMap;
+			loc = _loc;
+		}
+		@Override
+		public void onClick(View v) {
+			// TODO Auto-generated method stub
+			
+			if(visitedPlacesToggleButton.isChecked())
+			{
+				visitedPlacesToggleButton.setOnClickListener(visitedPlacesOffClickListener);
+			}
+			else
+			{
+				visitedPlacesToggleButton.setOnClickListener(visitedPlacesClickListener);
+			}
+			for(PlaceObj placeVisited : placesVisited)
+			{
+				placesVisitedMarkers.clear();
+				Location latlng = new Location(LocationManager.GPS_PROVIDER);
+				latlng.setLatitude(placeVisited.lat);
+				latlng.setLongitude(placeVisited.lng);
+				showVisitedPlaceOnMap(myMap,latlng,placeVisited.name);
+			}
+			
+		}
+		
+	}
+	private class VisitedPlacesButtonOffClickListener implements OnClickListener{
+
+		GoogleMap myMap;
+		Location loc;
+		VisitedPlacesButtonOffClickListener(GoogleMap _myMap, Location _loc){
+			myMap = _myMap;
+			loc = _loc;
+		}
+		@Override
+		public void onClick(View v) {
+			// TODO Auto-generated method stub
+			
+			if(visitedPlacesToggleButton.isChecked())
+			{
+				visitedPlacesToggleButton.setOnClickListener(visitedPlacesOffClickListener);
+			}
+			else
+			{
+				visitedPlacesToggleButton.setOnClickListener(visitedPlacesClickListener);
+			}
+			clearPlacesVisited(myMap, loc);
+			
+		}
+		
 	}
 
 	private class PlacesButtonClickListener implements OnClickListener{
@@ -384,10 +475,12 @@ public class MainActivity extends FragmentActivity {
 		public void onClick(View v) {
 			// TODO Auto-generated method stub
 			Location currentLoc  = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+			placesListMarkers.clear();
 			if(!(currentLoc.getLatitude() == loc.getLatitude() && currentLoc.getLongitude() == loc.getLongitude()) || placesList.size() == 0 )
 				showInterestingPlacesNearby(myMap,loc);
 			else
 			{
+				
 				showPlaceListFromCache(myMap);
 			}
 			if(placesToggleButton.isChecked())

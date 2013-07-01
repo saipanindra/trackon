@@ -20,6 +20,19 @@
        android:layout_height="wrap_content"
        android:layout_alignBottom="@+id/map"
        android:layout_alignLeft="@+id/map"
-       android:text="ToggleButton" />
+       android:text="ToggleButton"
+       android:textOff="P"
+       android:textOn="P" />
+
+   <ToggleButton
+       android:id="@+id/visitedPlacesToggle"
+       android:layout_width="wrap_content"
+       android:layout_height="wrap_content"
+       android:layout_alignBottom="@+id/map"
+       android:layout_marginLeft="20dp"
+       android:layout_toRightOf="@+id/placesToggle"
+       android:text="ToggleButton"
+       android:textOff="V"
+       android:textOn="V" />
    
 </RelativeLayout>
