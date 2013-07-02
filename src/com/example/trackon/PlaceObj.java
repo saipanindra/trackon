@@ -25,7 +25,7 @@ package com.example.trackon;
 		public boolean equals(Object o) {
 			// TODO Auto-generated method stub
 			if(o instanceof PlaceObj)
-			 return (((PlaceObj) o).id == this.id); 
+			 return (((PlaceObj) o).id.equals(this.id)); 
 			return false;
 		}
 	}
