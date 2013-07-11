@@ -168,7 +168,9 @@ public class MainActivity extends FragmentActivity {
 								placeLoc.setLatitude(lastPlaceVisited.lat);
 								placeLoc.setLongitude(lastPlaceVisited.lng);
 								placesVisited.add(lastPlaceVisited);
-								if(placesToggleButton.isChecked())
+								//if(visitedPlacesToggleButton.isChecked())
+									//publishProgress();
+								if(visitedPlacesToggleButton.isChecked())
 								 showVisitedPlaceOnMap(result.map,placeLoc,lastProximatePlaceOfInterest.name);
 							}
 
@@ -187,6 +189,7 @@ public class MainActivity extends FragmentActivity {
 		protected void onProgressUpdate(Void... values) {
 			// TODO Auto-generated method stub
 			super.onProgressUpdate(values);
+			showVisitedPlaces();
 		}
 
 	}
