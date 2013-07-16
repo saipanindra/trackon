@@ -6,5 +6,10 @@
     <string name="hello_world">Hello world!</string>
     <string name="places_hint">Places Of Interest</string>
     <string name="places_text">Places</string>
-
+    <string name="paces_visited_dialog_title">Notes on Visited Place</string>
+    <string name="place_name">Place</string>
+    <string name="visited_time">Visited Dates and Times</string>
+    <string name="notes">Notes</string>
+    <string name="Expenses">Expenses</string>
+    <string name="places_visited_close_button">Close</string>
 </resources>

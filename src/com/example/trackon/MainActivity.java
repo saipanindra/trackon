@@ -7,6 +7,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Date;
 
 import android.content.Context;
 import android.location.Location;
@@ -14,6 +15,7 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
 import android.view.Menu;
 import android.view.View;
@@ -47,6 +49,7 @@ public class MainActivity extends FragmentActivity {
 	ArrayList<Marker> placesListMarkers = new ArrayList<Marker>();
 	ArrayList<Marker> placesVisitedMarkers = new ArrayList<Marker>();
     Marker currentLocationMarker = null;
+    AsyncTask placesCheckerTask = null;
 	final Context context = this;
 
 	class GetPlaces extends AsyncTask<AsynchInput,Void,AsynchOutput>{
@@ -155,23 +158,60 @@ public class MainActivity extends FragmentActivity {
 					if(placesV.size() > 0){
 						try
 						{
+							//wait for some time 
 							Thread.sleep(2000);
 							Location currentLoc  = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
 							PlaceObj lastPlaceVisited = placesV.get(0);
 							String proximatePlaceOfInterestJSON = getProximatePlaceOfInterest(result.map,currentLoc);
 							ArrayList<PlaceObj> currentPOI = PlacesFromJSON.getPlacesFromJSON(proximatePlaceOfInterestJSON);
 							PlaceObj lastProximatePlaceOfInterest = currentPOI.get(0);
-							if(lastProximatePlaceOfInterest.id.equals(lastPlaceVisited.id) && !placesVisited.contains(lastProximatePlaceOfInterest))
+							//Check if the user is at the same place after some wait time.
+							if(lastProximatePlaceOfInterest.id.equals(lastPlaceVisited.id) )
 							{
 
+								DialogFragment visitedPlaceDialogFragment = VisitedPlaceDialog.newinstance(lastPlaceVisited.name, lastPlaceVisited.visitedTimes);
+								
 								Location placeLoc = new Location(LocationManager.GPS_PROVIDER);
+								//if the last place visited is already visited, update date and time
+								if(placesVisited.contains(lastProximatePlaceOfInterest))
+								{
+									PlaceObj currentPlaceObj = null;
+									for(PlaceObj p : placesVisited)
+									{
+									   if(p.equals(lastProximatePlaceOfInterest))
+									   {
+										   currentPlaceObj = p;break;
+									   }
+									}
+									if(currentPlaceObj != null)
+									{
+										currentPlaceObj.visitedTimes.add(new Date(System.currentTimeMillis()).toString());
+									}
+								}
+								//else create a new Place Object
+								else{
+								
 								placeLoc.setLatitude(lastPlaceVisited.lat);
 								placeLoc.setLongitude(lastPlaceVisited.lng);
 								placesVisited.add(lastPlaceVisited);
-								//if(visitedPlacesToggleButton.isChecked())
-									//publishProgress();
+								}
+								//show the last visited place on the map
 								if(visitedPlacesToggleButton.isChecked())
-								 showVisitedPlaceOnMap(result.map,placeLoc,lastProximatePlaceOfInterest.name);
+									 showVisitedPlaceOnMap(result.map,placeLoc,lastProximatePlaceOfInterest.name);
+								/*
+								//else{
+								
+									
+											
+								 //placesVisitedMarkers.add(result.map.addMarker(new MarkerOptions()
+									.position(new LatLng(placeLoc.getLatitude(),placeLoc.getLongitude()))
+									.title(lastProximatePlaceOfInterest.name)
+									.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_VIOLET))));
+								 //placesVisitedMarkers.get(placesVisitedMarkers.size()-1).setVisible(false);
+									
+								}
+								visitedPlaceDialogFragment.show(getSupportFragmentManager(), "visitedplacedialog");
+								*/	
 							}
 
 
@@ -232,9 +272,10 @@ public class MainActivity extends FragmentActivity {
 				if( (existingLocation != null && (currentLocationTimeInMillis - existingLocation.getTime()) > 2000 * 60) || existingLocation == null){
 
 					placesList.clear();
+					//clear the current location if it's marked.
 					if(existingLocation != null)
 					 currentLocationMarker.setVisible(false);
-
+                    
 					existingLocation = loc;
 					showCurrentLocationOnMap(myMap,loc,"Your Location");
 					checkForPlaceProximity(myMap, loc);
@@ -305,7 +346,7 @@ public class MainActivity extends FragmentActivity {
 				"&radius=10&sensor=true" +
 				"&types=food|bar|store|museum|art_gallery"+
 				"&key=AIzaSyCCFZuvv8sdrcwIjCHQVoiNWCahSieEdbg";
-		new PlaceVisitChecker().execute(new AsynchInput(myMap,placesSearchStr));
+		placesCheckerTask = new PlaceVisitChecker().execute(new AsynchInput(myMap,placesSearchStr));
 	}
 
 	public String getProximatePlaceOfInterest(GoogleMap myMap, Location loc)
@@ -341,8 +382,6 @@ public class MainActivity extends FragmentActivity {
 	 */
 	public void showInterestingPlacesNearby(GoogleMap myMap,Location loc){
 
-		//clearInterestingPlacesNearby(myMap, loc);
-		//placesListMarkers.clear();
 		clearMarkers(placesListMarkers);
 		placesListMarkers.clear();
 		String placesSearchStr = "https://maps.googleapis.com/maps/api/place/nearbysearch/" +
@@ -377,10 +416,8 @@ public class MainActivity extends FragmentActivity {
 	 */
 	public void showCurrentLocationOnMap(GoogleMap myMap,Location loc,String label){
 
-		//myMap.clear();
 		LatLng latlng = new LatLng(loc.getLatitude(),loc.getLongitude());
-		//if(label.equals("Your Location")){
-        if(currentLocationMarker != null)
+		if(currentLocationMarker != null)
         	currentLocationMarker.setVisible(false);
 		currentLocationMarker = myMap.addMarker(new MarkerOptions()
 		.position(latlng)
@@ -391,19 +428,14 @@ public class MainActivity extends FragmentActivity {
 	
 	public void showVisitedPlaces()
 	{
-		//clearPlacesVisited();
 		for(Marker m : placesVisitedMarkers)
 		{
 		  m.setVisible(true);
 		}
 	}
 
-	public void showVistedPlaces(GoogleMap myMap, Location loc)
-	{
-		
-	}
+	
 	public void showVisitedPlaceOnMap(GoogleMap myMap,Location loc, String label){
-		//else if(label.equals("POI")){
 		LatLng latlng = new LatLng(loc.getLatitude(),loc.getLongitude());
 		placesVisitedMarkers.add(myMap.addMarker(new MarkerOptions()
 		.position(latlng)
@@ -443,15 +475,17 @@ public class MainActivity extends FragmentActivity {
 		public void onClick(View v) {
 			// TODO Auto-generated method stub
 
-			placesVisitedMarkers.clear();
-			if(visitedPlacesToggleButton.isChecked())
-			{
+			//placesVisitedMarkers.clear();
+			//showVisitedPlaces();
+			//if(visitedPlacesToggleButton.isChecked())
+			//{
 				visitedPlacesToggleButton.setOnClickListener(visitedPlacesOffClickListener);
-			}
-			else
-			{
-				visitedPlacesToggleButton.setOnClickListener(visitedPlacesClickListener);
-			}
+			//}
+			//else
+			//{
+				//visitedPlacesToggleButton.setOnClickListener(visitedPlacesClickListener);
+			//}
+			
 			for(PlaceObj placeVisited : placesVisited)
 			{
 				

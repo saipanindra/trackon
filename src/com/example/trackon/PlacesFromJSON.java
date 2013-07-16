@@ -1,6 +1,7 @@
 package com.example.trackon;
 
 import java.util.ArrayList;
+import java.util.Date;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -23,9 +24,10 @@ public class PlacesFromJSON {
 				Double locationLng = locationObj.getDouble("lng");
 				String name = resultObj.getString("name");
 				String id = resultObj.getString("id");
-				PlaceObj pObj = new PlaceObj(name,locationLat,locationLng,id);
-
-				pList.add(pObj);
+				Date d = new Date(System.currentTimeMillis());
+			
+				PlaceObj pObj = new PlaceObj(name,locationLat,locationLng,id);//,d);
+             	pList.add(pObj);
 
 			}
 
