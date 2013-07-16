@@ -14,21 +14,21 @@ import java.util.Date;
 		public String id;
 		public Double expense;
 		public String notes;
-		public ArrayList<String> visitedTimes;
+		public ArrayList<String> visitedTimes = new ArrayList<String>();
 		@Override
 		public int hashCode() {
 			// TODO Auto-generated method stub
 			return Integer.parseInt(lat.toString()) ^ Integer.parseInt(lng.toString());
 			//return super.hashCode();
 		}
-		public PlaceObj(String _name, Double _lat,Double _lng,String _id){//, Date _dt){
+		public PlaceObj(String _name, Double _lat,Double _lng,String _id, Date _dt){
 			name = _name;
 			lat = _lat;
 			lng = _lng;
 			id = _id;
 			expense = 0.0;
 			notes = "";
-			//visitedTimes.add(_dt.toString());
+			visitedTimes.add(_dt.toString());
 		}
 		@Override
 		public boolean equals(Object o) {

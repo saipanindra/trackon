@@ -26,8 +26,9 @@ public class PlacesFromJSON {
 				String id = resultObj.getString("id");
 				Date d = new Date(System.currentTimeMillis());
 			
-				PlaceObj pObj = new PlaceObj(name,locationLat,locationLng,id);//,d);
-             	pList.add(pObj);
+				PlaceObj pObj = new PlaceObj(name,locationLat,locationLng,id,d);//,d);
+             	
+				pList.add(pObj);
 
 			}
 

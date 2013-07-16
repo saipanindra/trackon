@@ -76,10 +76,6 @@ public class MainActivity extends FragmentActivity {
 				}
 
 				placesBuilder = PlacesFromURI.getPlacesFromURI(uri);
-
-
-
-
 			}
 			return new AsynchOutput(myMap, placesBuilder.toString());
 		}
