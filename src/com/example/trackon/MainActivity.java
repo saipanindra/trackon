@@ -20,6 +20,7 @@ import android.support.v4.app.FragmentActivity;
 import android.view.Menu;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.widget.TextView;
 import android.widget.ToggleButton;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -166,7 +167,7 @@ public class MainActivity extends FragmentActivity {
 							{
 
 								DialogFragment visitedPlaceDialogFragment = VisitedPlaceDialog.newinstance(lastPlaceVisited.name, lastPlaceVisited.visitedTimes);
-								
+								visitedPlaceDialogFragment.show(getSupportFragmentManager(), "visitedplacedialog");
 								Location placeLoc = new Location(LocationManager.GPS_PROVIDER);
 								//if the last place visited is already visited, update date and time
 								if(placesVisited.contains(lastProximatePlaceOfInterest))
