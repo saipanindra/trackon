@@ -12,4 +12,6 @@
     <string name="notes">Notes</string>
     <string name="Expenses">Expenses</string>
     <string name="places_visited_close_button">Close</string>
+    <string name="placeNameHint">Name of the Place</string>
+    <string name="todo">TODO</string>
 </resources>

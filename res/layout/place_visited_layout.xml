@@ -1,18 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/ScrollView1"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="vertical" >
+    android:layout_height="wrap_content" >
 
     <ScrollView
         android:id="@+id/scrollView1"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_weight="4247.87" >
+        android:layout_height="0dp" >
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:orientation="vertical" >
 
             <TextView
@@ -26,7 +25,10 @@
                 android:id="@+id/placeName"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:ems="10" >
+                android:ems="10"
+                android:enabled="false"
+                android:hint="@string/placeNameHint"
+                android:inputType="text" >
 
                 <requestFocus />
             </EditText>
@@ -38,11 +40,26 @@
                 android:text="@string/visited_time"
                 android:textAppearance="?android:attr/textAppearanceMedium" />
 
-            <ExpandableListView
-                android:id="@+id/visitedDatesAndTimes"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content" >
-            </ExpandableListView>
+
+                <EditText
+                    android:id="@+id/visitedDateTime"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="0.24"
+                    android:ems="10"
+                    android:enabled="false"
+                    android:inputType="date" />
+
+                <ImageButton
+                    android:id="@+id/imageButton1"
+                    android:layout_width="30dp"
+                    android:layout_height="match_parent"
+                    android:contentDescription="TODO"
+                    android:src="@drawable/common_signin_btn_icon_dark" />
+            </LinearLayout>
 
             <TextView
                 android:id="@+id/notesLabel"
@@ -71,11 +88,10 @@
                 android:id="@+id/expenses"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="4247.87"
                 android:ems="10"
                 android:inputType="numberDecimal" />
 
         </LinearLayout>
     </ScrollView>
 
-</LinearLayout>
+</ScrollView>

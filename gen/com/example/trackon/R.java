@@ -182,24 +182,26 @@ containing a value of this type.
         public static final int ic_launcher=0x7f020018;
     }
     public static final class id {
-        public static final int action_settings=0x7f050011;
-        public static final int expenses=0x7f050010;
-        public static final int expensesLabel=0x7f05000f;
+        public static final int ScrollView1=0x7f050008;
+        public static final int action_settings=0x7f050013;
+        public static final int expenses=0x7f050012;
+        public static final int expensesLabel=0x7f050011;
         public static final int hybrid=0x7f050004;
+        public static final int imageButton1=0x7f05000e;
         public static final int map=0x7f050005;
         public static final int none=0x7f050000;
         public static final int normal=0x7f050001;
-        public static final int notes=0x7f05000e;
-        public static final int notesLabel=0x7f05000d;
-        public static final int placeLabel=0x7f050009;
-        public static final int placeName=0x7f05000a;
+        public static final int notes=0x7f050010;
+        public static final int notesLabel=0x7f05000f;
+        public static final int placeLabel=0x7f05000a;
+        public static final int placeName=0x7f05000b;
         public static final int placesToggle=0x7f050006;
         public static final int satellite=0x7f050002;
-        public static final int scrollView1=0x7f050008;
+        public static final int scrollView1=0x7f050009;
         public static final int terrain=0x7f050003;
-        public static final int visitedDatesAndTimes=0x7f05000c;
+        public static final int visitedDateTime=0x7f05000d;
         public static final int visitedPlacesToggle=0x7f050007;
-        public static final int visitedTimesLabel=0x7f05000b;
+        public static final int visitedTimesLabel=0x7f05000c;
     }
     public static final class layout {
         public static final int activity_main=0x7f030000;
@@ -290,10 +292,12 @@ containing a value of this type.
         public static final int location_client_ulr_inactive_unknown_restriction=0x7f060014;
         public static final int notes=0x7f06001d;
         public static final int paces_visited_dialog_title=0x7f06001a;
+        public static final int placeNameHint=0x7f060020;
         public static final int place_name=0x7f06001b;
         public static final int places_hint=0x7f060018;
         public static final int places_text=0x7f060019;
         public static final int places_visited_close_button=0x7f06001f;
+        public static final int todo=0x7f060021;
         public static final int visited_time=0x7f06001c;
     }
     public static final class style {
